@@ -77,6 +77,12 @@ def focus_measure_and_plot(path : str, treshold : float = 100.0):
   # Load the image in RGB scale for visualization
   img = dlib.load_rgb_image(path)
 
+  # Initialize the face detector
+  detector = dlib.get_frontal_face_detector()
+
+  # Detect the faces in the image
+  dets = detector(img)
+
   # Draw a green rectangle around the detected face
   for face in dets:
     cv2.rectangle(img=img, 
@@ -87,6 +93,7 @@ def focus_measure_and_plot(path : str, treshold : float = 100.0):
     
   # If the variance of the image lies below the treshold, the color of the title will be green, otherwise red
   colour = 'g' if treshold < lapl_var else 'r'
+
   # Plot the color image with the variance
   plt.imshow(img)
   plt.title(f"Variance: {lapl_var:.2f}", c=colour)
