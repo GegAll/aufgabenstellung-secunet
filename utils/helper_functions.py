@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 def calculate_variance(path : str):
   """
-  This function recognizes a face from an image an calculates
+  This function recognizes a face from an image and calculates
   the variance after using a Laplace transformation. 
 
   Args:
@@ -13,6 +13,7 @@ def calculate_variance(path : str):
   
   Returns:
     lapl_var (float) : variance after Laplace transformation
+    dets (dlib.rectangles) : the detected face rectangles
   """
   # Load the image in gray scale for analysis purposes
   img = dlib.load_grayscale_image(path)
@@ -26,12 +27,12 @@ def calculate_variance(path : str):
   # If the number of faces is larger than 1, print error and exit the function
   if len(dets) > 1:
       print("Error: The number of faces recognized is larger than one. Please upload a picture where only one face can be recognized.")
-      return  # Exit the function early
+      return None, None  # Exit the function early
 
   # Continue with further analysis if only one face is detected
   if len(dets) == 0:
       print("Error: No face detected. Please upload a picture with a recognizable face.")
-      return  # Exit if no face is detected
+      return None, None  # Exit if no face is detected
 
   for face in dets:
     # Get the coordinates of the bounding box containing the face
@@ -59,7 +60,7 @@ def calculate_variance(path : str):
   # Calculate the variance (measure for the sharpness of the image)
   lapl_var = lapl_std.item()**2
 
-  return lapl_var
+  return lapl_var, dets  # Return variance and face rectangles
 
 def focus_measure_and_plot(path : str, treshold : float = 100.0):
   """
@@ -69,19 +70,17 @@ def focus_measure_and_plot(path : str, treshold : float = 100.0):
   Args:
     path (str) : Path to the image to be analyzed.
     treshold (float) : Measure of sharpness. If this value lies below the
-    variance of the image, then the image is enough sharp.
+    variance of the image, then the image is sharp enough.
   """
-  # Calculate the variance
-  lapl_var = calculate_variance(path)
+  # Calculate the variance and detect faces
+  lapl_var, dets = calculate_variance(path)
+
+  # If dets is None, exit
+  if dets is None:
+      return
 
   # Load the image in RGB scale for visualization
   img = dlib.load_rgb_image(path)
-
-  # Initialize the face detector
-  detector = dlib.get_frontal_face_detector()
-
-  # Detect the faces in the image
-  dets = detector(img)
 
   # Draw a green rectangle around the detected face
   for face in dets:
@@ -92,14 +91,14 @@ def focus_measure_and_plot(path : str, treshold : float = 100.0):
       thickness=2)
     
   # If the variance of the image lies below the treshold, the color of the title will be green, otherwise red
-  colour = 'g' if treshold < lapl_var else 'r'
+  colour = 'g' if lapl_var > treshold else 'r'
 
   # Plot the color image with the variance
   plt.imshow(img)
-  plt.title(f"Variance: {lapl_var:.2f}", c=colour)
+  plt.title(f"Variance: {lapl_var:.2f}", color=colour)
   plt.axis(False) # Turn off the axis
-  plt.show();
+  plt.show()
 
   # If the face is not sharp enough, print out a message asking the user to take upload an image where the face is in focus
-  if treshold > lapl_var:
+  if lapl_var < treshold:
     print("The face cannot be recognized. Please upload an image where the face is in focus.")
