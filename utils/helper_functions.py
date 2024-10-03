@@ -60,7 +60,7 @@ def calculate_variance(path : str):
   # Calculate the variance (measure for the sharpness of the image)
   lapl_var = lapl_std.item()**2
 
-  return lapl_var, dets  # Return variance and face rectangles
+  return lapl_var  # Return variance and face rectangles
 
 def focus_measure_and_plot(path : str, treshold : float = 100.0):
   """
@@ -73,14 +73,16 @@ def focus_measure_and_plot(path : str, treshold : float = 100.0):
     variance of the image, then the image is sharp enough.
   """
   # Calculate the variance and detect faces
-  lapl_var, dets = calculate_variance(path)
-
-  # If dets is None, exit
-  if dets is None:
-      return
+  lapl_var = calculate_variance(path)
 
   # Load the image in RGB scale for visualization
   img = dlib.load_rgb_image(path)
+
+  # Initialize the face detector
+  detector = dlib.get_frontal_face_detector()
+
+  # Detect the faces in the image
+  dets = detector(img)
 
   # Draw a green rectangle around the detected face
   for face in dets:
